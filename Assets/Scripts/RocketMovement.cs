@@ -9,6 +9,10 @@ public class RocketMovement : MonoBehaviour
     AudioSource audioSource;
     [SerializeField] float thrustStrength = 100f;
     [SerializeField] float rotationStrength = 50f;
+    [SerializeField] AudioClip mainEngine;
+    [SerializeField] ParticleSystem mainBoosterParticle;
+    [SerializeField] ParticleSystem leftBoosterParticle;
+    [SerializeField] ParticleSystem rightBoosterParticle;
 
     Rigidbody rb;
 
@@ -40,7 +44,7 @@ public class RocketMovement : MonoBehaviour
         else if (rotatationInput > 0)
         {
             ApplyRotation(rotatationInput);
-        } 
+        }
     }
 
     private void ApplyRotation(float rotationDirection)
@@ -48,6 +52,27 @@ public class RocketMovement : MonoBehaviour
         rb.freezeRotation = true;
         transform.Rotate(Vector3.forward * rotationStrength * Time.fixedDeltaTime * rotationDirection * -1);
         rb.freezeRotation = false;
+
+        HandleBoosterParticles(rotationDirection);
+    }
+
+    private void HandleBoosterParticles(float rotationDirection)
+    {
+        if (rotationDirection > 0)
+        {
+            if (!rightBoosterParticle.isPlaying) rightBoosterParticle.Play();
+            leftBoosterParticle.Stop();
+        }
+        else if (rotationDirection < 0 )
+        {
+            if (!leftBoosterParticle.isPlaying) leftBoosterParticle.Play();
+            rightBoosterParticle.Stop();
+        }
+        else
+        {
+            leftBoosterParticle.Stop();
+            rightBoosterParticle.Stop();
+        }
     }
 
     private void ProcessThrust()
@@ -72,7 +97,8 @@ public class RocketMovement : MonoBehaviour
         rb.AddRelativeForce(Vector3.up * thrustStrength * Time.fixedDeltaTime);
         if (!audioSource.isPlaying)
         {
-            audioSource.Play();
+            audioSource.PlayOneShot(mainEngine);
         }
+        mainBoosterParticle.Play();
     }
 }

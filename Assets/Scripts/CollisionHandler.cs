@@ -1,15 +1,40 @@
 using System;
 using System.Collections;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 
 public class CollisionHandller : MonoBehaviour
 {
     [SerializeField] float levelLoadDelay = 2f;
+    [SerializeField] AudioClip crashSfx;
+    [SerializeField] AudioClip successSfx;
+    [SerializeField] ParticleSystem sucessParticle;
+    [SerializeField] ParticleSystem crashParticles;
+
+    AudioSource audioSource;
     bool isTransitioning = false;
+    bool isCollidable = true;
+
+    private void Start()
+    {
+        audioSource = GetComponent<AudioSource>();
+    }
+
+    private void Update()
+    {
+        RespondToDebugKeys();    
+    }
+
+    private void RespondToDebugKeys()
+    {
+        if(Keyboard.current.nKey.isPressed) LoadNextLevel();
+        else if (Keyboard.current.cKey.wasPressedThisFrame) isCollidable = !isCollidable;
+    }
+
     private void OnCollisionEnter(Collision other)
     {
-        if (isTransitioning) {return;}
+        if (isTransitioning || !isCollidable) {return;}
 
         switch (other.gameObject.tag)
         {
@@ -35,6 +60,9 @@ public class CollisionHandller : MonoBehaviour
     {
         GetComponent<RocketMovement>().enabled = false;
         isTransitioning = true;
+        audioSource.Stop();
+        audioSource.PlayOneShot(crashSfx);
+        crashParticles.Play();
         StartCoroutine(ReloadLevelAfterDelay());
     }
 
@@ -47,7 +75,11 @@ public class CollisionHandller : MonoBehaviour
 
     private void StartSuccessSequence()
     {
-        isTransitioning = false;
+        GetComponent<RocketMovement>().enabled = false;
+        isTransitioning = true;
+        audioSource.Stop();
+        audioSource.PlayOneShot(successSfx);
+        sucessParticle.Play();
         StartCoroutine(LoadNextLevelAfterDelay());
     }
 
